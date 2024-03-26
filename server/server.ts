@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import path from 'path';
 
 const app = express();
 const server = createServer(app);
@@ -15,7 +16,9 @@ interface Guess {
 // Store the history of guesses
 const guessHistory: Guess[] = [];
 
-app.use(express.static('build')); // Serve static files from React app
+const buildPath = path.join(__dirname, '..', '..', 'build');
+app.use(express.static(buildPath));
+
 
 io.on('connection', (socket) => {
   console.log('New WebSocket connection: ', socket.id);
