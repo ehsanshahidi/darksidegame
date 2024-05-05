@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import io from 'socket.io-client';
+import ErrorBanner from './ErrorBanner';
 
 // Establish socket connection
 const socket = io('http://localhost:4000');
@@ -9,11 +10,22 @@ interface Guess {
   guess: string;
 }
 
+// Define valid cards and suits
+const validCards = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const validSuits = ['C', 'D', 'H', 'S']; // Clubs, Diamonds, Hearts, Spades
+
+// Function to check if a guess is valid
+const isValidGuess = (guess: string) => {
+  const [card, suit] = guess.split('');
+  return validCards.includes(card) && validSuits.includes(suit);
+}
+
 const Game: React.FC = () => {
   const [name, setName] = useState('');
   const [guess, setGuess] = useState('');
   const [guesses, setGuesses] = useState<Guess[]>([]);
   const [nameSubmitted, setNameSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     // Attempt to retrieve the player's name from localStorage
@@ -24,6 +36,7 @@ const Game: React.FC = () => {
     }
   
     const handleNewGuess = (newGuess: Guess) => {
+      if (isValidGuess(newGuess.guess)) {
       setGuesses((prevGuesses) => {
         // Check if the guess is already in the list to avoid duplication
         if (!prevGuesses.find(g => g.playerName === newGuess.playerName && g.guess === newGuess.guess)) {
@@ -31,7 +44,11 @@ const Game: React.FC = () => {
         }
         return prevGuesses;
       });
+    }else{
+      setErrorMessage('Invalid guess: ' + newGuess.guess);
+    
     };
+  }
   
     socket.on('connect', () => {
       console.log('Successfully connected to the server');
@@ -72,6 +89,7 @@ const Game: React.FC = () => {
 
   return (
     <div>
+      <ErrorBanner message={errorMessage} />
       {!nameSubmitted ? (
         <div>
           <input
