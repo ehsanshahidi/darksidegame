@@ -22,23 +22,39 @@ const Game: React.FC = () => {
       setName(storedName);
       setNameSubmitted(true);
     }
-
-    // Listen for initial guesses and subsequent guesses
+  
+    const handleNewGuess = (newGuess: Guess) => {
+      setGuesses((prevGuesses) => {
+        // Check if the guess is already in the list to avoid duplication
+        if (!prevGuesses.find(g => g.playerName === newGuess.playerName && g.guess === newGuess.guess)) {
+          return [...prevGuesses, newGuess];
+        }
+        return prevGuesses;
+      });
+    };
+  
+    socket.on('connect', () => {
+      console.log('Successfully connected to the server');
+    });
+    
+    socket.on('connect_error', (error) => {
+      console.log('Failed to connect to the server:', error);
+    });
+    
     socket.on('initialGuesses', (initialGuesses: Guess[]) => {
       setGuesses(initialGuesses);
     });
-
+  
     socket.emit('requestInitialGuesses');
-
-    socket.on('guessMade', (newGuess: Guess) => {
-      setGuesses((prevGuesses) => [...prevGuesses, newGuess]);
-    });
-
+  
+    socket.on('guessMade', handleNewGuess);
+  
     return () => {
-      socket.off('guessMade');
       socket.off('initialGuesses');
+      socket.off('guessMade', handleNewGuess);
     };
   }, []);
+  
 
   const handleSubmitName = () => {
     localStorage.setItem('playerName', name);
